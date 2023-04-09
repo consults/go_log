@@ -15,6 +15,7 @@ import (
 type LogFileFormatter struct {
 }
 
+// 格式化处理
 func (l LogFileFormatter) Format(entry *log.Entry) ([]byte, error) {
 	funcs := strings.SplitN(entry.Caller.Function, ".", 2)
 	msg := fmt.Sprintf("[%s] [%s] [%s:%d] %s\n",
@@ -25,13 +26,14 @@ func (l LogFileFormatter) Format(entry *log.Entry) ([]byte, error) {
 		entry.Message)
 	return []byte(msg), nil
 }
-func InitLog(logPath string, logName string, rotatime time.Duration, maxage time.Duration) {
+func InitLog(logPath string, logName string, maxSize int64, maxAge time.Duration) {
 	filepaths := path.Join(logPath, logName)
 	writer, _ := rotatelogs.New(
-		filepaths+".%Y%m%d%H%M",               //分割后文件名
-		rotatelogs.WithLinkName(filepaths),    //软连接指向最新文件
-		rotatelogs.WithMaxAge(maxage),         // 最大保留时间
-		rotatelogs.WithRotationTime(rotatime), // 设置切割时间
+		filepaths+".%Y%m%d%H%M",            //分割后文件名
+		rotatelogs.WithLinkName(filepaths), //软连接指向最新文件
+		rotatelogs.WithMaxAge(maxAge),      // 最大保留时间(time.Hour*24*7) 一个星期
+		//rotatelogs.WithRotationTime(rotatime),     // 设置滚动时间
+		rotatelogs.WithRotationSize(maxSize), //设置日志文件最大存储大小为10MB (1024*1024*10)
 	)
 	writeMap := lfshook.WriterMap{
 		log.TraceLevel: writer,
